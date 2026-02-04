@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: myweb
-        image: 3134you/mytom:latest
+        image: 3134you/mytom:e73cd7e250573341aab2d2b7ae142d13687e53c3
         ports:
         - containerPort: 8080
         imagePullPolicy: Always
