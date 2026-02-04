@@ -1,0 +1,39 @@
+name: tomcat build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mytom:latest .
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mytom:${{ github.sha }} .
+
+    - name: Push
+      run: |
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/mytom:latest
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/mytom:${{ github.sha }}
+
+    - name: k8s manifest
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+
+        sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/mytom:${{ github.sha }}|g" k8s/deployment.yaml
+
+        git add k8s/deployment.yaml
+        git commit -m "update image to ${{ github.sha }} [skip ci]"
+        git push origin main
